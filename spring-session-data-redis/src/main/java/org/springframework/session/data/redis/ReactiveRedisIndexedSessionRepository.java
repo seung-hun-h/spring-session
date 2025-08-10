@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
 import org.apache.commons.logging.Log;
@@ -37,6 +38,7 @@ import reactor.core.scheduler.Schedulers;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.data.redis.connection.ReactiveSubscription;
@@ -235,7 +237,7 @@ import org.springframework.util.StringUtils;
 public class ReactiveRedisIndexedSessionRepository
 		implements ReactiveSessionRepository<ReactiveRedisIndexedSessionRepository.RedisSession>,
 		ReactiveFindByIndexNameSessionRepository<ReactiveRedisIndexedSessionRepository.RedisSession>, DisposableBean,
-		InitializingBean {
+		InitializingBean, SmartLifecycle {
 
 	private static final Log logger = LogFactory.getLog(ReactiveRedisIndexedSessionRepository.class);
 
@@ -274,6 +276,8 @@ public class ReactiveRedisIndexedSessionRepository
 
 	private final List<Disposable> subscriptions = new ArrayList<>();
 
+	private final AtomicBoolean running = new AtomicBoolean(false);
+
 	/**
 	 * The namespace for every key used by Spring Session in Redis.
 	 */
@@ -308,9 +312,17 @@ public class ReactiveRedisIndexedSessionRepository
 	}
 
 	@Override
-	public void afterPropertiesSet() throws Exception {
+	public void start() {
+		if (!this.running.compareAndSet(false, true)) {
+			return;
+		}
 		subscribeToRedisEvents();
 		setupCleanupTask();
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		start();
 	}
 
 	private void setupCleanupTask() {
@@ -325,7 +337,9 @@ public class ReactiveRedisIndexedSessionRepository
 	}
 
 	private Flux<Void> cleanUpExpiredSessions() {
-		return this.expirationStore.retrieveExpiredSessions(this.clock.instant()).flatMap(this::touch);
+		return this.expirationStore.retrieveExpiredSessions(this.clock.instant())
+				.filter(ignored -> isRunning())
+				.flatMap(this::touch);
 	}
 
 	private Mono<Void> touch(String sessionId) {
@@ -333,11 +347,29 @@ public class ReactiveRedisIndexedSessionRepository
 	}
 
 	@Override
-	public void destroy() {
+	public void stop() {
+		if (!this.running.compareAndSet(true, false)) {
+			return;
+		}
 		for (Disposable subscription : this.subscriptions) {
 			subscription.dispose();
 		}
 		this.subscriptions.clear();
+	}
+
+	@Override
+	public void destroy() {
+		stop();
+	}
+
+	@Override
+	public boolean isRunning() {
+		return this.running.get();
+	}
+
+	@Override
+	public int getPhase() {
+		return 100;
 	}
 
 	@Override
