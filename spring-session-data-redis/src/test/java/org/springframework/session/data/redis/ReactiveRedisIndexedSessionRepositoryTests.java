@@ -51,7 +51,8 @@ class ReactiveRedisIndexedSessionRepositoryTests {
 
 	@BeforeEach
 	void setup() {
-		this.repository = new ReactiveRedisIndexedSessionRepository(this.sessionRedisOperations, this.keyEventsOperations);
+		this.repository = new ReactiveRedisIndexedSessionRepository(this.sessionRedisOperations,
+				this.keyEventsOperations);
 	}
 
 	@Test
@@ -141,8 +142,7 @@ class ReactiveRedisIndexedSessionRepositoryTests {
 
 		Flux<Void> result = invokeCleanUpExpiredSessions();
 
-		StepVerifier.create(result)
-				.verifyComplete();
+		StepVerifier.create(result).verifyComplete();
 	}
 
 	@Test
@@ -155,8 +155,7 @@ class ReactiveRedisIndexedSessionRepositoryTests {
 
 		Flux<Void> result = invokeCleanUpExpiredSessions();
 
-		StepVerifier.create(result)
-				.verifyComplete();
+		StepVerifier.create(result).verifyComplete();
 	}
 
 	@Test

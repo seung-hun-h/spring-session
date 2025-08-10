@@ -338,8 +338,8 @@ public class ReactiveRedisIndexedSessionRepository
 
 	private Flux<Void> cleanUpExpiredSessions() {
 		return this.expirationStore.retrieveExpiredSessions(this.clock.instant())
-				.filter((ignored) -> isRunning())
-				.flatMap(this::touch);
+			.filter((ignored) -> isRunning())
+			.flatMap(this::touch);
 	}
 
 	private Mono<Void> touch(String sessionId) {
