@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -33,6 +34,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.NestedExceptionUtils;
@@ -266,7 +268,7 @@ import org.springframework.util.StringUtils;
  */
 public class RedisIndexedSessionRepository
 		implements FindByIndexNameSessionRepository<RedisIndexedSessionRepository.RedisSession>, MessageListener,
-		InitializingBean, DisposableBean {
+		InitializingBean, DisposableBean, SmartLifecycle {
 
 	private static final Log logger = LogFactory.getLog(RedisIndexedSessionRepository.class);
 
@@ -335,6 +337,8 @@ public class RedisIndexedSessionRepository
 
 	private BiFunction<String, Map<String, Object>, MapSession> redisSessionMapper = new RedisSessionMapper();
 
+	private final AtomicBoolean running = new AtomicBoolean(false);
+
 	/**
 	 * Creates a new instance. For an example, refer to the class level javadoc.
 	 * @param sessionRedisOperations the {@link RedisOperations} to use for managing the
@@ -349,12 +353,20 @@ public class RedisIndexedSessionRepository
 	}
 
 	@Override
-	public void afterPropertiesSet() {
+	public void start() {
+		if (!this.running.compareAndSet(false, true)) {
+			return;
+		}
 		if (!Scheduled.CRON_DISABLED.equals(this.cleanupCron)) {
 			this.taskScheduler = createTaskScheduler();
 			this.taskScheduler.initialize();
 			this.taskScheduler.schedule(this::cleanUpExpiredSessions, new CronTrigger(this.cleanupCron));
 		}
+	}
+
+	@Override
+	public void afterPropertiesSet() {
+		start();
 	}
 
 	private static ThreadPoolTaskScheduler createTaskScheduler() {
@@ -364,10 +376,29 @@ public class RedisIndexedSessionRepository
 	}
 
 	@Override
-	public void destroy() {
+	public void stop() {
+		if (!this.running.compareAndSet(true, false)) {
+			return;
+		}
 		if (this.taskScheduler != null) {
 			this.taskScheduler.destroy();
+			this.taskScheduler = null;
 		}
+	}
+
+	@Override
+	public void destroy() {
+		stop();
+	}
+
+	@Override
+	public boolean isRunning() {
+		return this.running.get();
+	}
+
+	@Override
+	public int getPhase() {
+		return 100;
 	}
 
 	/**
@@ -492,6 +523,9 @@ public class RedisIndexedSessionRepository
 	}
 
 	public void cleanUpExpiredSessions() {
+		if (!isRunning()) {
+			return;
+		}
 		this.expirationStore.cleanupExpiredSessions();
 	}
 
