@@ -38,8 +38,8 @@ import reactor.core.scheduler.Schedulers;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.context.SmartLifecycle;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.data.redis.connection.ReactiveSubscription;
 import org.springframework.data.redis.core.ReactiveRedisOperations;
@@ -338,7 +338,7 @@ public class ReactiveRedisIndexedSessionRepository
 
 	private Flux<Void> cleanUpExpiredSessions() {
 		return this.expirationStore.retrieveExpiredSessions(this.clock.instant())
-				.filter(ignored -> isRunning())
+				.filter((ignored) -> isRunning())
 				.flatMap(this::touch);
 	}
 

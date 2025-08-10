@@ -34,9 +34,9 @@ import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.context.SmartLifecycle;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.redis.connection.Message;

@@ -16,10 +16,6 @@
 
 package org.springframework.session.data.redis;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
-
 import java.time.Duration;
 import java.util.List;
 
@@ -28,13 +24,19 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
+
 import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import reactor.core.Disposable;
-import reactor.core.publisher.Flux;
-import reactor.test.StepVerifier;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ReactiveRedisIndexedSessionRepositoryTests {
@@ -113,7 +115,7 @@ class ReactiveRedisIndexedSessionRepositoryTests {
 		List<Disposable> subscriptions = getSubscriptions();
 		assertThat(subscriptions).isNotEmpty();
 
-		subscriptions.forEach(sub -> assertThat(sub.isDisposed()).isFalse());
+		subscriptions.forEach((sub) -> assertThat(sub.isDisposed()).isFalse());
 	}
 
 	@Test
@@ -127,7 +129,7 @@ class ReactiveRedisIndexedSessionRepositoryTests {
 
 		this.repository.stop();
 
-		subscriptionsBeforeStop.forEach(sub -> assertThat(sub.isDisposed()).isTrue());
+		subscriptionsBeforeStop.forEach((sub) -> assertThat(sub.isDisposed()).isTrue());
 
 		List<Disposable> subscriptionsAfterStop = getSubscriptions();
 		assertThat(subscriptionsAfterStop).isEmpty();
@@ -223,7 +225,7 @@ class ReactiveRedisIndexedSessionRepositoryTests {
 
 		List<Disposable> subscriptions = getSubscriptions();
 		assertThat(subscriptions).isNotEmpty();
-		subscriptions.forEach(sub -> assertThat(sub.isDisposed()).isFalse());
+		subscriptions.forEach((sub) -> assertThat(sub.isDisposed()).isFalse());
 	}
 
 	private void givenSubscriptionsNever() {
@@ -244,7 +246,8 @@ class ReactiveRedisIndexedSessionRepositoryTests {
 	private Flux<Void> invokeCleanUpExpiredSessions() {
 		try {
 			return ReflectionTestUtils.invokeMethod(this.repository, "cleanUpExpiredSessions");
-		} catch (Exception e) {
+		}
+		catch (Exception ex) {
 			return Flux.empty();
 		}
 	}
