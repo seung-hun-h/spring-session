@@ -251,7 +251,7 @@ public class ReactiveRedisIndexedSessionRepository
 	public static final int DEFAULT_DATABASE = 0;
 
 	/**
-	 * The default SmartLifeCycle phase
+	 * The default SmartLifeCycle phase.
 	 */
 	public static final int DEFAULT_SMART_LIFECYCLE_PHASE = Integer.MAX_VALUE / 2;
 
@@ -381,7 +381,7 @@ public class ReactiveRedisIndexedSessionRepository
 
 	@Override
 	public int getPhase() {
-		return phase;
+		return this.phase;
 	}
 
 	public void setPhase(int phase) {

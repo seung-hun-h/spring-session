@@ -289,7 +289,7 @@ public class RedisIndexedSessionRepository
 	public static final String DEFAULT_NAMESPACE = "spring:session";
 
 	/**
-	 * The default SmartLifeCycle phase
+	 * The default SmartLifeCycle phase.
 	 */
 	public static final int DEFAULT_SMART_LIFECYCLE_PHASE = Integer.MAX_VALUE / 2;
 
@@ -395,6 +395,7 @@ public class RedisIndexedSessionRepository
 			this.taskScheduler = null;
 		}
 
+		this.running = false;
 	}
 
 	@Override
@@ -409,7 +410,7 @@ public class RedisIndexedSessionRepository
 
 	@Override
 	public int getPhase() {
-		return phase;
+		return this.phase;
 	}
 
 	public void setPhase(int phase) {
