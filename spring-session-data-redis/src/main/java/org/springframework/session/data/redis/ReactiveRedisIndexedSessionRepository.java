@@ -251,7 +251,24 @@ public class ReactiveRedisIndexedSessionRepository
 	public static final int DEFAULT_DATABASE = 0;
 
 	/**
-	 * The default SmartLifeCycle phase.
+	 * The default SmartLifecycle phase.
+	 *
+	 * <p>
+	 * Set to {@code Integer.MAX_VALUE / 2} to position this repository between the Redis
+	 * {@link org.springframework.data.redis.connection.RedisConnectionFactory} (typically
+	 * small, e.g. {@code 0}) and web server / messaging listener containers (very large
+	 * values, e.g. {@code Integer.MAX_VALUE - 1024}, {@code Integer.MAX_VALUE - 100},
+	 * {@code Integer.MAX_VALUE}), preventing shutdown races.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>NOTE</b>: if the ConnectionFactory’s phase is >= this value, raise it via
+	 * {@link #setPhase(int)} to keep “SessionRepository phase > ConnectionFactory phase”.
+	 * </p>
+	 *
+	 * @see org.springframework.context.SmartLifecycle
+	 * @see org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
+	 * @see org.springframework.data.redis.connection.jedis.JedisConnectionFactory
 	 */
 	public static final int DEFAULT_SMART_LIFECYCLE_PHASE = Integer.MAX_VALUE / 2;
 
