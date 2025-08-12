@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -294,7 +293,6 @@ public class RedisIndexedSessionRepository
 	 */
 	public static final int DEFAULT_SMART_LIFECYCLE_PHASE = Integer.MAX_VALUE / 2;
 
-
 	private int database = DEFAULT_DATABASE;
 
 	private int phase = DEFAULT_SMART_LIFECYCLE_PHASE;
@@ -345,7 +343,7 @@ public class RedisIndexedSessionRepository
 
 	private BiFunction<String, Map<String, Object>, MapSession> redisSessionMapper = new RedisSessionMapper();
 
-	private final AtomicBoolean running = new AtomicBoolean(false);
+	private volatile boolean running = false;
 
 	/**
 	 * Creates a new instance. For an example, refer to the class level javadoc.
@@ -362,14 +360,17 @@ public class RedisIndexedSessionRepository
 
 	@Override
 	public void start() {
-		if (!this.running.compareAndSet(false, true)) {
+		if (this.running) {
 			return;
 		}
+
 		if (!Scheduled.CRON_DISABLED.equals(this.cleanupCron)) {
 			this.taskScheduler = createTaskScheduler();
 			this.taskScheduler.initialize();
 			this.taskScheduler.schedule(this::cleanUpExpiredSessions, new CronTrigger(this.cleanupCron));
 		}
+
+		this.running = true;
 	}
 
 	@Override
@@ -385,13 +386,15 @@ public class RedisIndexedSessionRepository
 
 	@Override
 	public void stop() {
-		if (!this.running.compareAndSet(true, false)) {
+		if (!this.running) {
 			return;
 		}
+
 		if (this.taskScheduler != null) {
 			this.taskScheduler.destroy();
 			this.taskScheduler = null;
 		}
+
 	}
 
 	@Override
@@ -401,7 +404,7 @@ public class RedisIndexedSessionRepository
 
 	@Override
 	public boolean isRunning() {
-		return this.running.get();
+		return this.running;
 	}
 
 	@Override

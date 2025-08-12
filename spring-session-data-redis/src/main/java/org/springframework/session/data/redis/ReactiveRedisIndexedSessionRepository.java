@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
 import org.apache.commons.logging.Log;
@@ -252,8 +251,8 @@ public class ReactiveRedisIndexedSessionRepository
 	public static final int DEFAULT_DATABASE = 0;
 
 	/**
-	* The default SmartLifeCycle phase
-	*/
+	 * The default SmartLifeCycle phase
+	 */
 	public static final int DEFAULT_SMART_LIFECYCLE_PHASE = Integer.MAX_VALUE / 2;
 
 	private final ReactiveRedisOperations<String, Object> sessionRedisOperations;
@@ -281,8 +280,6 @@ public class ReactiveRedisIndexedSessionRepository
 
 	private final List<Disposable> subscriptions = new ArrayList<>();
 
-	private final AtomicBoolean running = new AtomicBoolean(false);
-
 	/**
 	 * The namespace for every key used by Spring Session in Redis.
 	 */
@@ -299,6 +296,8 @@ public class ReactiveRedisIndexedSessionRepository
 	private Duration cleanupInterval = Duration.ofSeconds(60);
 
 	private Clock clock = Clock.systemUTC();
+
+	private volatile boolean running = false;
 
 	/**
 	 * Creates a new instance with the provided {@link ReactiveRedisOperations}.
@@ -320,11 +319,14 @@ public class ReactiveRedisIndexedSessionRepository
 
 	@Override
 	public void start() {
-		if (!this.running.compareAndSet(false, true)) {
+		if (this.running) {
 			return;
 		}
+
 		subscribeToRedisEvents();
 		setupCleanupTask();
+
+		this.running = true;
 	}
 
 	@Override
@@ -355,13 +357,16 @@ public class ReactiveRedisIndexedSessionRepository
 
 	@Override
 	public void stop() {
-		if (!this.running.compareAndSet(true, false)) {
+		if (!this.running) {
 			return;
 		}
+
 		for (Disposable subscription : this.subscriptions) {
 			subscription.dispose();
 		}
 		this.subscriptions.clear();
+
+		this.running = false;
 	}
 
 	@Override
@@ -371,7 +376,7 @@ public class ReactiveRedisIndexedSessionRepository
 
 	@Override
 	public boolean isRunning() {
-		return this.running.get();
+		return this.running;
 	}
 
 	@Override
