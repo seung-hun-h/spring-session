@@ -289,7 +289,15 @@ public class RedisIndexedSessionRepository
 	 */
 	public static final String DEFAULT_NAMESPACE = "spring:session";
 
+	/**
+	 * The default SmartLifeCycle phase
+	 */
+	public static final int DEFAULT_SMART_LIFECYCLE_PHASE = Integer.MAX_VALUE / 2;
+
+
 	private int database = DEFAULT_DATABASE;
+
+	private int phase = DEFAULT_SMART_LIFECYCLE_PHASE;
 
 	/**
 	 * The namespace for every key used by Spring Session in Redis.
@@ -398,7 +406,11 @@ public class RedisIndexedSessionRepository
 
 	@Override
 	public int getPhase() {
-		return 100;
+		return phase;
+	}
+
+	public void setPhase(int phase) {
+		this.phase = phase;
 	}
 
 	/**

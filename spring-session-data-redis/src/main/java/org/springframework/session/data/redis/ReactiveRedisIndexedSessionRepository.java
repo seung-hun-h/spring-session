@@ -251,6 +251,11 @@ public class ReactiveRedisIndexedSessionRepository
 	 */
 	public static final int DEFAULT_DATABASE = 0;
 
+	/**
+	* The default SmartLifeCycle phase
+	*/
+	public static final int DEFAULT_SMART_LIFECYCLE_PHASE = Integer.MAX_VALUE / 2;
+
 	private final ReactiveRedisOperations<String, Object> sessionRedisOperations;
 
 	private final ReactiveRedisTemplate<String, String> keyEventsOperations;
@@ -284,6 +289,8 @@ public class ReactiveRedisIndexedSessionRepository
 	private String namespace = DEFAULT_NAMESPACE + ":";
 
 	private int database = DEFAULT_DATABASE;
+
+	private int phase = DEFAULT_SMART_LIFECYCLE_PHASE;
 
 	private ReactiveRedisSessionIndexer indexer;
 
@@ -369,7 +376,11 @@ public class ReactiveRedisIndexedSessionRepository
 
 	@Override
 	public int getPhase() {
-		return 100;
+		return phase;
+	}
+
+	public void setPhase(int phase) {
+		this.phase = phase;
 	}
 
 	@Override

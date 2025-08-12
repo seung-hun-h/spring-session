@@ -103,7 +103,9 @@ class ReactiveRedisIndexedSessionRepositoryTests {
 	}
 
 	@Test
-	void getPhaseShouldReturn100() {
+	void getPhaseShouldReturnPhase() {
+		this.repository.setPhase(100);
+
 		assertThat(this.repository.getPhase()).isEqualTo(100);
 	}
 
